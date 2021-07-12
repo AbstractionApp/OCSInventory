@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+    ocs-db:
+        image: mysql:5.7.22
+        container_name: ocs-db
+        hostname: mysql
+        command: mysqld --default_authentication_plugin=mysql_native_password
+        volumes:
+                - ./db_data:/var/lib/mysql
+        restart: always
+        env_file:
+                - .env
+        environment:
+                TZ: $TZ
+                MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+                MYSQL_USER: $MYSQL_USER
+                MYSQL_PASSWORD: $MYSQL_PASSWORD
+                MYSQL_DATABASE: $MYSQL_DATABASE
+        ports:
+                - "3306:3306"
+        networks:
+                - ocs-network
+    ocs-app:
+            image: ocs:2.0                                      
+            container_name: ocs-app
+            hostname: ocs
+            ports:                    
+                    - 80:80
+                    - 443:443           
+            volumes:                    
+                    - /etc/timezone:/etc/timezone:ro
+                    - /etc/localtime:/etc/localtime:ro                                          
+                    - ./opt:/opt
+                    - ./log:/var/log/ocsinventory-server
+                    - ./ocsinventory-server:/etc/ocsinventory-server
+                    - ./ocsinventory-reports:/usr/share/ocsinventory-reports 
+                    - ./lib/:/var/lib/ocsinventory-reports  
+            restart: always
+            env_file:
+                    - .env
+            environment:
+                TIMEZONE: $TZ
+            links:
+              - ocs-db                
+            depends_on:
+                    - ocs-db
+            networks:
+                    - ocs-network
+networks:
+    ocs-network:
+      driver: bridge
